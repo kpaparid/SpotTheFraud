@@ -17,6 +17,7 @@ public class HttpGetter {
 	public static void main(String[] args) throws UnknownHostException {
 
 		System.out.println("Big Brother Google is watching us!");
+		System.out.println("kwstas");
 		Twitter twitter = new TwitterFactory().getInstance();
 
 		twitter.setOAuthConsumer("HkcYUNlVLch6EiWHvjaKBQnvj",
