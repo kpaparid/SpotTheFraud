@@ -24,11 +24,8 @@ public class HttpGetter {
 
 	public static void main(String[] args) throws UnknownHostException {
 
-		
-		/*
-		System.out.println("Big Brother Google is watching us!");
-		System.out.println("Big Brother Google is watching us!");
-		System.out.println("kwstas");
+		 
+		int counter = 0;
 		Twitter twitter = new TwitterFactory().getInstance();
 
 		twitter.setOAuthConsumer("HkcYUNlVLch6EiWHvjaKBQnvj",
@@ -37,37 +34,32 @@ public class HttpGetter {
 				"2864427430-P6wK4L6HypoeQZpYWtvNp3a3desDFHnTcm9Njy0",
 				"m0PELMvI6kJxsPkeKmmp6oDgQGnC7BX40K6qeVjen6L41"));
 
-		try {
-			Trends trends = twitter.getPlaceTrends(1);
-			System.out.println("Dem greek trends");
-
-			System.out.println("As of : " + trends.getAsOf());
-			for (Trend trend : trends.getTrends()) {
-				System.out.println(trend);
-				System.out.println("Hey!");
-				System.out.println("What's going on?");
-				System.out.println("Commiting without classpath!");
-
-			}
-		} catch (TwitterException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		while(true) {
+		   try {
+			   counter++;
+			   Trends trends = twitter.getPlaceTrends(1);
+			   System.out.println("Wordlwide trends");
+			   System.out.println(counter);
+			   System.out.println("As of : " + trends.getAsOf());
+			   for (Trend trend : trends.getTrends()) {
+			   	System.out.println(trend);
+			   }
+		   }
+		   catch (TwitterException e1) {
+		      	// TODO Auto-generated catch block
+		     	e1.printStackTrace();
+		   }
+		   try {
+			   Thread.sleep(300000);
+		   }
+		   catch(Exception e){
+			   Thread.currentThread().interrupt();
+		   }
+			   
 		}
 
-		try {
 
-			ResponseList<Status> a = twitter.getHomeTimeline(new Paging(1, 5));
-
-			for (Status b : a) {
-				System.out.println(b.getText());
-			}
-
-		} catch (Exception e) {
-			System.out.println("Error!");
-		}
-
-		*/
-		
+		/*
 		 MongoClient mongoClient = new MongoClient();
 		 
 		 
@@ -89,7 +81,7 @@ public class HttpGetter {
 		 
 		 DBObject myDoc = coll.findOne();
 		 System.out.println(myDoc);
-		 
+		 */
 
 	}
 
