@@ -53,6 +53,7 @@ public class HttpGetter {
 			 System.out.println(trend);
 			 System.out.println("Hey!");
 			 System.out.println("What's going on?");
+			 System.out.println("Commiting without classpath!");
 			 
 			 }
 		} catch (TwitterException e1) {
