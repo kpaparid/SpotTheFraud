@@ -52,6 +52,7 @@ public class HttpGetter {
 			 for (Trend trend : trends.getTrends()) {
 			 System.out.println(trend);
 			 System.out.println("Hey!");
+			 System.out.println("What's going on?");
 			 
 			 }
 		} catch (TwitterException e1) {
