@@ -18,6 +18,7 @@ public class HttpGetter {
 
 		System.out.println("Big Brother Google is watching us!");
 		System.out.println("kwstas");
+		System.out.println("vasilis");
 		Twitter twitter = new TwitterFactory().getInstance();
 
 		twitter.setOAuthConsumer("HkcYUNlVLch6EiWHvjaKBQnvj",
