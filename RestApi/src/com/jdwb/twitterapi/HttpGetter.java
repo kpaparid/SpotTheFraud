@@ -51,7 +51,7 @@ public class HttpGetter {
 			 System.out.println("As of : " + trends.getAsOf());
 			 for (Trend trend : trends.getTrends()) {
 			 System.out.println(trend);
-			 
+			 System.out.println("Hey!");
 			 
 			 }
 		} catch (TwitterException e1) {
