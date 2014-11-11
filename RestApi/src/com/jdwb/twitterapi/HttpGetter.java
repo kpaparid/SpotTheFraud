@@ -10,9 +10,13 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 
+import twitter4j.FilterQuery;
 import twitter4j.Paging;
 import twitter4j.ResponseList;
+import twitter4j.StallWarning;
 import twitter4j.Status;
+import twitter4j.StatusDeletionNotice;
+import twitter4j.StatusListener;
 import twitter4j.Trend;
 import twitter4j.Trends;
 import twitter4j.Twitter;
@@ -42,7 +46,7 @@ public class HttpGetter {
 			   System.out.println(counter);
 			   System.out.println("As of : " + trends.getAsOf());
 			   for (Trend trend : trends.getTrends()) {
-			   	System.out.println(trend);
+			   	System.out.println(trend.getName());
 			   }
 		   }
 		   catch (TwitterException e1) {
@@ -57,7 +61,43 @@ public class HttpGetter {
 		   }
 			   
 		}
+/*
+ * FilterQuery filter = new FilterQuery();
 
+String[] keywords = {"#katsantekis","#dematis"};
+filter.track(keywords);
+StatusListener listener = new StatusListener() {
+@Override
+public void onStatus(Status status) {
+System.out.println("@" + status.getUser().getScreenName() + " - " + status.getText());
+}
+@Override
+public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
+System.out.println("Got a status deletion notice id:" + statusDeletionNotice.getStatusId());
+}
+@Override
+public void onTrackLimitationNotice(int numberOfLimitedStatuses) {
+System.out.println("Got track limitation notice:" + numberOfLimitedStatuses);
+}
+@Override
+public void onScrubGeo(long userId, long upToStatusId) {
+System.out.println("Got scrub_geo event userId:" + userId + " upToStatusId:" + upToStatusId);
+}
+@Override
+public void onStallWarning(StallWarning warning) {
+System.out.println("Got stall warning:" + warning);
+}
+@Override
+public void onException(Exception ex) {
+ex.printStackTrace();
+}
+};
+twitterStream.addListener(listener);
+twitterStream.filter(filter);
+ * 
+ * 
+ * 
+ */
 
 		/*
 		 MongoClient mongoClient = new MongoClient();
