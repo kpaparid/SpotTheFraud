@@ -40,13 +40,52 @@ public class HttpGetter {
 		  .setOAuthConsumerSecret("0zqBzkJoov1sHCgGIwKchGv1NdaHL9vFY4kVGR4c5yZ0Soz4OY")
 		  .setOAuthAccessToken("2864396627-EU9BPTAx0i8S1gmUMj1unQndjdZLKcBgp7WdC1e")
 		  .setOAuthAccessTokenSecret("nVlqyDZIKg17xGWGSXA9UIFGK6eafUTamBWxmBWQl2b0I");
+		
+		ConfigurationBuilder cb2 = new ConfigurationBuilder();
+		cb2.setDebugEnabled(true)
+		  .setOAuthConsumerKey("PITlssl6DKTBmMv8WPl2XUQZm")
+		  .setOAuthConsumerSecret("0zqBzkJoov1sHCgGIwKchGv1NdaHL9vFY4kVGR4c5yZ0Soz4OY")
+		  .setOAuthAccessToken("2864396627-EU9BPTAx0i8S1gmUMj1unQndjdZLKcBgp7WdC1e")
+		  .setOAuthAccessTokenSecret("nVlqyDZIKg17xGWGSXA9UIFGK6eafUTamBWxmBWQl2b0I");
+		
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		Twitter twitter = tf.getInstance();
 		
-		TwitterStream twitterStream = new TwitterStreamFactory().getInstance();
+		TwitterStream twitterStream = new TwitterStreamFactory(cb2.build()).getInstance();
+		
 		FilterQuery filter = new FilterQuery();
 		long currentTime = 0;
-			
+		
+		
+		StatusListener listener = new StatusListener() {
+	    	@Override
+	    	public void onStatus(Status status) {
+	    	System.out.println("@" + status.getUser().getScreenName() + " - " + status.getText()); /* edw boroume na valoume exodo se arxeio*/
+	    	}
+	    	@Override
+	    	public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
+	    	System.out.println("Got a status deletion notice id:" + statusDeletionNotice.getStatusId());
+	    	}
+	    	@Override
+	    	public void onTrackLimitationNotice(int numberOfLimitedStatuses) {
+	    	System.out.println("Got track limitation notice:" + numberOfLimitedStatuses);
+	    	}
+	    	@Override
+	    	public void onScrubGeo(long userId, long upToStatusId) {
+	    	System.out.println("Got scrub_geo event userId:" + userId + " upToStatusId:" + upToStatusId);
+	    	}
+	    	@Override
+	    	public void onStallWarning(StallWarning warning) {
+	    	System.out.println("Got stall warning:" + warning);
+	    	}
+	    	@Override
+	    	public void onException(Exception ex) {
+	    	ex.printStackTrace();
+	    	}
+		};
+		
+		twitterStream.addListener(listener);
+
 		while(true) {
 		   try {
 		       currentTime = System.currentTimeMillis();
@@ -58,45 +97,27 @@ public class HttpGetter {
 			   for (Trend trend : trends.getTrends()) {
 			   	System.out.println(trend);
 			   }
-			   while(System.currentTimeMillis() <= (currentTime + 300000))
+			   String[] keywords = new String[10];
+			   int kounter = 0;
+			   for (Trend trend : trends.getTrends())
 			   {
-				   for (Trend trend : trends.getTrends())
-				   {
-					   
-					    String[] keywords = {trend.getName()};
-					    filter.track(keywords);
-					    
-					    StatusListener listener = new StatusListener() {
-					    	@Override
-					    	public void onStatus(Status status) {
-					    	System.out.println("@" + status.getUser().getScreenName() + " - " + status.getText()); /* edw boroume na valoume exodo se arxeio*/
-					    	}
-					    	@Override
-					    	public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
-					    	System.out.println("Got a status deletion notice id:" + statusDeletionNotice.getStatusId());
-					    	}
-					    	@Override
-					    	public void onTrackLimitationNotice(int numberOfLimitedStatuses) {
-					    	System.out.println("Got track limitation notice:" + numberOfLimitedStatuses);
-					    	}
-					    	@Override
-					    	public void onScrubGeo(long userId, long upToStatusId) {
-					    	System.out.println("Got scrub_geo event userId:" + userId + " upToStatusId:" + upToStatusId);
-					    	}
-					    	@Override
-					    	public void onStallWarning(StallWarning warning) {
-					    	System.out.println("Got stall warning:" + warning);
-					    	}
-					    	@Override
-					    	public void onException(Exception ex) {
-					    	ex.printStackTrace();
-					    	}
-					    };
-					    twitterStream.addListener(listener);
-					    twitterStream.filter(filter);
-				   }   
+
+				     keywords[kounter] = trend.getName();
+				     kounter++;
+
+			   }   
+
+			   
+			   twitterStream.cleanUp();
+			   filter.track(keywords);
+			   twitterStream.filter(filter);
+
+			   while(System.currentTimeMillis() <= (currentTime + 30000))
+			   {
+				   
 			   
 			   }
+			   
 		   }
 		   catch (TwitterException e1) {
 		      	// TODO Auto-generated catch block
