@@ -112,7 +112,7 @@ public class HttpGetter {
 			   filter.track(keywords);
 			   twitterStream.filter(filter);
 
-			   while(System.currentTimeMillis() <= (currentTime + 30000))
+			   while(System.currentTimeMillis() <= (currentTime + 300000))
 			   {
 				   
 			   
