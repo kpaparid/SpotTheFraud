@@ -135,27 +135,6 @@ public class HttpGetter {
 			}
 
 		}
-
-		/*
-		 * MongoClient mongoClient = new MongoClient();
-		 * 
-		 * 
-		 * DB db = mongoClient.getDB("mydb");
-		 * 
-		 * Set<String> colls = db.getCollectionNames(); for(String s : colls){
-		 * System.out.println(s); } DBCollection coll =
-		 * db.getCollection("testCollection");
-		 * mongoClient.setWriteConcern(WriteConcern.JOURNALED);
-		 * 
-		 * BasicDBObject doc = new BasicDBObject("name", "MongoDB")
-		 * .append("type", "database") .append("count", 1) .append("info", new
-		 * BasicDBObject("x", 203).append("y", 102));
-		 * 
-		 * coll.insert(doc);
-		 * 
-		 * DBObject myDoc = coll.findOne(); System.out.println(myDoc);
-		 */
-
 	}
 
 	public static void updateTrends(Trends trends) {
