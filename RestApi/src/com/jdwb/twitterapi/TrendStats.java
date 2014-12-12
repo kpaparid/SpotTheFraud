@@ -33,4 +33,9 @@ public class TrendStats {
 	public Trend getTrend() {
 		return trend;
 	}
+	
+	public long getStartTime()
+	{
+		return startTime;
+	}
 }

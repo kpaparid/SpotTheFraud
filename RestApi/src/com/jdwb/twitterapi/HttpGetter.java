@@ -16,9 +16,12 @@ import twitter4j.TwitterFactory;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 import twitter4j.conf.ConfigurationBuilder;
+import twitter4j.json.DataObjectFactory;
 
 public class HttpGetter {
+	
 	static ArrayList<TrendStats> activeTrends;
+	private static DatabaseManagment database;
 
 	public static void main(String[] args) throws UnknownHostException {
 
@@ -43,6 +46,8 @@ public class HttpGetter {
 						"2864396627-EU9BPTAx0i8S1gmUMj1unQndjdZLKcBgp7WdC1e")
 				.setOAuthAccessTokenSecret(
 						"nVlqyDZIKg17xGWGSXA9UIFGK6eafUTamBWxmBWQl2b0I");
+		
+		cb2.setJSONStoreEnabled(true);
 
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		Twitter twitter = tf.getInstance();
@@ -56,6 +61,13 @@ public class HttpGetter {
 		StatusListener listener = new StatusListener() {
 			@Override
 			public void onStatus(Status status) {
+				
+				
+				@SuppressWarnings("deprecation")
+				String rawJSON = DataObjectFactory.getRawJSON(status);
+				database.addTweet(rawJSON);
+						                      
+				/*
 				for (int i = 0; i < activeTrends.size(); i++) {
 					TrendStats t = (TrendStats) activeTrends.get(i);
 					String name = t.getTrend().getName();
@@ -66,6 +78,8 @@ public class HttpGetter {
 								+ status.getText());
 					}
 				}
+				*/
+				
 			}
 
 			@Override
@@ -99,12 +113,15 @@ public class HttpGetter {
 		};
 
 		twitterStream.addListener(listener);
+		
+		database = new DatabaseManagment();
 
 		while (true) {
 			try {
 				currentTime = System.currentTimeMillis();
 
 				Trends trends = twitter.getPlaceTrends(1);
+
 
 				updateTrends(trends);
 
@@ -116,15 +133,26 @@ public class HttpGetter {
 				 */
 
 				String[] keywords = new String[activeTrends.size()];
+				
 				int kounter = 0;
 				for (int i = 0; i < activeTrends.size(); i++) {
-					TrendStats t = (TrendStats) activeTrends.get(i);
-					keywords[kounter++] = t.getTrend().getName();
+					
+					String trendName = activeTrends.get(i).getTrend().getName();
+					long time =  activeTrends.get(i).getStartTime();
+					keywords[kounter++] = trendName;
+					
+					database.addTrend(trendName, time);
 				}
+				
+				
 
+				//database.dropDB();
 				twitterStream.cleanUp();
 				filter.track(keywords);
 				twitterStream.filter(filter);
+				
+				database.printDatabase();
+				
 
 				while (System.currentTimeMillis() <= (currentTime + 300000)) {
 
@@ -136,6 +164,7 @@ public class HttpGetter {
 
 		}
 	}
+
 
 	public static void updateTrends(Trends trends) {
 		activeTrends = new ArrayList<>();
@@ -162,6 +191,7 @@ public class HttpGetter {
 		for (int j = 0; j < activeTrends.size(); j++) {
 			TrendStats t = (TrendStats) activeTrends.get(j);
 			if (t.expired()) {
+				database.addDethTime(activeTrends.get(i).getTrend().getName(), 200000000);
 				activeTrends.remove(j);
 			}
 		}
