@@ -2,6 +2,7 @@ package com.jdwb.twitterapi;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import twitter4j.FilterQuery;
 import twitter4j.StallWarning;
@@ -147,13 +148,23 @@ public class HttpGetter {
 				
 
 				//database.dropDB();
-				twitterStream.cleanUp();
-				filter.track(keywords);
-				twitterStream.filter(filter);
+				//twitterStream.cleanUp();
+				//filter.track(keywords);
+				//twitterStream.filter(filter);
 				
-				database.printDatabase();
+				int flag = 1;
+				System.out.println(Integer.MAX_VALUE); 
+				while(flag == 1)
+				{
+				    String id =  database.printDatabase().toString();
+					System.out.println(id);
+					if(id.equals("-1"))
+					{
+						flag = 0;
+					}
+				}
 				
-
+				
 				while (System.currentTimeMillis() <= (currentTime + 300000)) {
 
 				}
@@ -161,8 +172,28 @@ public class HttpGetter {
 			} catch (TwitterException e1) {
 				e1.printStackTrace();
 			}
-
+				
+			// close the Stream plz or gtfo
+			
+			
+			HashMap<Integer, Integer> freqHash = new HashMap<Integer, Integer>();
+			
+			/*
+			 * Get user id from MongoDB
+			 * pithanes lyseis = temp pou tha periexei ola ta ids pou epistrafikan apo ti Mongo
+			 * kai meta parse
+			 * Þ tha tous pairnoume 1-1 apo ti mongo kai meta add sto Hash
+			 * an yparxei tote freq += 1, an den yparxei tote add kai freq = 1
+			 * Sort sto hash me vasi to frequency
+			 * 4 Tetartimoria
+			 * random epilogi xristwn ktl ktl...
+			 */
+			
+			
+			
+			
 		}
+
 	}
 
 

@@ -13,6 +13,7 @@ import com.mongodb.util.JSON;
 public class DatabaseManagment {
 	
 	private DB db;
+	DBCursor cursor;
 	
 	
 	public DatabaseManagment()
@@ -88,7 +89,7 @@ public class DatabaseManagment {
 	}
 	
 	
-	void printDatabase()
+	Object printDatabase()
 	{
 		MongoClient mongoClient = null;
 		
@@ -101,18 +102,24 @@ public class DatabaseManagment {
 		
 		db = mongoClient.getDB( "twitterDB" );	
 		DBCollection coll = db.getCollection("TweetsCollection");
+		if(cursor == null)
+		{
+			cursor = coll.find();
+		}
+		DBObject obj1 = (DBObject) cursor.next().get("user");
+		//System.out.println("Hello! :" + obj1.get("id"));
 		
-		DBCursor cursor = coll.find();
 		
-		System.out.println("empika");
+		if(!cursor.hasNext())
+		{
+			cursor.close();
+			return  -1;
+		}
+
+		return obj1.get("id");
+
 		
-		try {
-			   while(cursor.hasNext()) {
-			       System.out.println(cursor.next());
-			   }
-			} finally {
-			   cursor.close();
-			}
+
 		
 	}
 	
