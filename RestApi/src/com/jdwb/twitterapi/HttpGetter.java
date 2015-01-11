@@ -169,7 +169,8 @@ public class HttpGetter {
 		
 		ArrayList<User> list = new ArrayList<User>();
 		
-		for(int j = 1; j < 5; j++)
+		for(int j = 0; j < 4; j++) // to allaksa gt an ksekinaei apo 1, tote gia to prwto tha exeis px an to quadSize = 10 kai random = 2 tha paei
+									// 2 + 10*1 = 12 enw eC thes to 2, enw an to ksekinas apo 0 ginetai swsta
 		{
 			for (int i = 0; i < 10; i++)
 			{
