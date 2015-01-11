@@ -89,7 +89,7 @@ public class DatabaseManagment {
 	}
 	
 	
-	Object printDatabase()
+	Object getIdsFromDatabase()
 	{
 		MongoClient mongoClient = null;
 		
