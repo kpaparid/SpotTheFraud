@@ -1,12 +1,12 @@
 package com.jdwb.twitterapi;
 
-public class User {
+public class OurUser {
 
 	private Long id;
 	private Integer numOfTweets;
 	
 	
-	public User (Long id, Integer num)
+	public OurUser (Long id, Integer num)
 	{
 		this.id = id;
 		numOfTweets = num;

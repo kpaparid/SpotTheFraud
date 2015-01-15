@@ -89,7 +89,7 @@ public class DatabaseManagment {
 	}
 	
 	
-	Object getIdsFromDatabase()
+	String getIdsFromDatabase()
 	{
 		MongoClient mongoClient = null;
 		
@@ -113,10 +113,10 @@ public class DatabaseManagment {
 		if(!cursor.hasNext())
 		{
 			cursor.close();
-			return  -1;
+			return  "-1";
 		}
 
-		return obj1.get("id");
+		return  obj1.get("id").toString();
 
 		
 

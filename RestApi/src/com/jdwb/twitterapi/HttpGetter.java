@@ -5,17 +5,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.omg.CORBA.FREE_MEM;
-
-import twitter4j.FilterQuery;
+import twitter4j.ResponseList;
 import twitter4j.StallWarning;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;
@@ -27,9 +21,11 @@ import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
+import twitter4j.User;
 import twitter4j.conf.ConfigurationBuilder;
 import twitter4j.json.DataObjectFactory;
 
+@SuppressWarnings("deprecation")
 public class HttpGetter {
 	
 	static ArrayList<TrendStats> activeTrends;
@@ -67,15 +63,14 @@ public class HttpGetter {
 		TwitterStream twitterStream = new TwitterStreamFactory(cb2.build())
 				.getInstance();
 
-		FilterQuery filter = new FilterQuery();
-		long currentTime = 0;
+		//FilterQuery filter = new FilterQuery();
+		//long currentTime = 0;
 
 		StatusListener listener = new StatusListener() {
 			@Override
 			public void onStatus(Status status) {
 				
 				
-				@SuppressWarnings("deprecation")
 				String rawJSON = DataObjectFactory.getRawJSON(status);
 				database.addTweet(rawJSON);
 						                      
@@ -131,10 +126,11 @@ public class HttpGetter {
 		// Reading users and dem tweetz and sorting 'em
 		HashMap<Long, Integer> freqHash = new HashMap<Long, Integer>();
 		
+		
 		int flag = 1;
 		while(flag == 1)
 		{
-		    Long id =  (Long) database.getIdsFromDatabase();
+		    long id =  Long.parseLong(database.getIdsFromDatabase());
 		    Integer temp = freqHash.get(id);
 		    if(temp != null)
 		    {
@@ -146,12 +142,79 @@ public class HttpGetter {
 		    	freqHash.put(id, 1);
 		    }
 
-			if(id.equals("-1"))
+			if(id == -1)
 			{
 				flag = 0;
 			}
 		}
-		ArrayList<User> listOfUsers= sortByValues(freqHash);
+		System.out.println("Ended with the first HashMap");
+		// Looking Up for Suspended Users
+		Set<Long> keyset = freqHash.keySet();
+		
+		long[] lookForUsers = new long[freqHash.size()]; 
+		
+		counter = 0;
+		
+		for(Long key : keyset)
+		{
+			lookForUsers[counter] = key;
+			counter ++;
+		}
+		
+		int iterations = freqHash.size() / 100;
+		
+		if(freqHash.size() % 100 != 0)
+		{
+			iterations = iterations + 1;
+		}
+		
+		
+		
+		HashMap<Long, Integer> nonSuspendedUsers = new HashMap<Long, Integer>(); // new hash with non suspended users
+		for(int i = 0; i < iterations; i++)
+		{
+			int jiterations = 100;
+			if(i == iterations - 1)
+			{
+				jiterations = freqHash.size() % 100;
+			}
+			
+			long[] tempUserIds = new long[jiterations]; // temp pinakas pou kanei store 100 - 100 tous users
+			
+			for(int j = 0; j < jiterations; j++)
+			{
+				tempUserIds[j] = lookForUsers[j + (i * 100)];
+		
+			}
+			
+			
+
+			try {
+				
+				ResponseList<User> temp = twitter.lookupUsers(tempUserIds);
+				
+				for(User t: temp)
+				{
+					long id = t.getId();
+					int freq = freqHash.get(id);
+					nonSuspendedUsers.put(id, freq);
+				}
+				
+				
+			} catch (TwitterException e) {
+				e.printStackTrace();
+			}
+			
+			
+
+		}
+		//endof finding suspended Users
+		System.out.println("Ended with suspended users");
+
+		
+		ArrayList<OurUser> listOfUsers = sortByValues(nonSuspendedUsers);
+		
+		
 		
 		/* printing the sorted list
 		for(User temp: listOfUsers)
@@ -159,6 +222,9 @@ public class HttpGetter {
 			System.out.println(temp.getId() + " : " + temp.getNumOfTweets());
 		}
 	    */
+		System.out.println("Old Size: " + freqHash.size() + " New hashmap size:" + nonSuspendedUsers.size());
+		System.out.println(listOfUsers);
+		nonSuspendedUsers = null;
 		freqHash = null;
 		//endof reading users and sorting
 		
@@ -167,17 +233,20 @@ public class HttpGetter {
 		int quadSize = listOfUsers.size()/4;
 		long[] userIds = new long[40];
 		
-		ArrayList<User> list = new ArrayList<User>();
+		
+		
+		ArrayList<OurUser> list = new ArrayList<OurUser>();
 		
 		for(int j = 0; j < 4; j++) // to allaksa gt an ksekinaei apo 1, tote gia to prwto tha exeis px an to quadSize = 10 kai random = 2 tha paei
-									// 2 + 10*1 = 12 enw eC thes to 2, enw an to ksekinas apo 0 ginetai swsta
+								  // 2 + 10*1 = 12 enw eC thes to 2, enw an to ksekinas apo 0 ginetai swsta
 		{
 			for (int i = 0; i < 10; i++)
 			{
 				Random rndm = new Random();
 				int randNum = rndm.nextInt(quadSize) + (quadSize * j);
 
-				User usr = new User(listOfUsers.get(randNum).getId(), listOfUsers.get(randNum).getNumOfTweets());
+				
+				OurUser usr = new OurUser(listOfUsers.get(randNum).getId(), listOfUsers.get(randNum).getNumOfTweets());
 			
 				userIds[(j-1)*10 + i] = listOfUsers.get(randNum).getId();
 				
@@ -187,7 +256,7 @@ public class HttpGetter {
 		
 		listOfUsers = null;
 		
-		
+
 		// filter(long[] = userIds) - twitterStream filtered by Ids we have in our lovely database
 		
 		
@@ -266,28 +335,28 @@ public class HttpGetter {
 	}
 
 	
-	private static ArrayList<User> sortByValues(HashMap<Long, Integer> map) { 
+	private static ArrayList<OurUser> sortByValues(HashMap<Long, Integer> map) { 
 		
 		
 
-		List<User> usersByTweets = new ArrayList<User>();
+		List<OurUser> usersByTweets = new ArrayList<OurUser>();
 		Set<Long> keyset = map.keySet();
 		
 		for(Long key : keyset)
 		{
-			User usr = new User(key, map.get(key));
+			OurUser usr = new OurUser(key, map.get(key));
 			usersByTweets.add(usr);
 		}
 
-		    Collections.sort(usersByTweets, new Comparator<User>() {
+		    Collections.sort(usersByTweets, new Comparator<OurUser>() {
 
-		        public int compare(User o1, User o2) {
+		        public int compare(OurUser o1, OurUser o2) {
 		            return o1.getNumOfTweets() - o2.getNumOfTweets();
 		        }
 		    });
 		    
 
-	       return (ArrayList<User>) usersByTweets;
+	       return (ArrayList<OurUser>) usersByTweets;
 	  }
 
 	public static void updateTrends(Trends trends) {
