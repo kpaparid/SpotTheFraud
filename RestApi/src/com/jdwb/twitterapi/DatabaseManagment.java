@@ -1,6 +1,7 @@
 package com.jdwb.twitterapi;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -67,6 +68,41 @@ public class DatabaseManagment {
 	
 	
 	
+	
+	public ArrayList<String> getAllTrends()
+	{
+		
+		ArrayList<String> getRekt = new ArrayList<String>();
+		MongoClient mongoClient = null;
+		
+		try {
+			mongoClient = new MongoClient( "localhost" );
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		db = mongoClient.getDB( "twitterDB" );
+		DBCollection coll = db.getCollection("TrendsCollection");
+		
+		DBCursor trendcursor = coll.find();
+		
+		try {
+		   while(trendcursor.hasNext()) {
+		       getRekt.add(trendcursor.next().get("name").toString());
+		   }
+		} finally {
+			trendcursor.close();
+		}
+		
+		return getRekt;
+	}
+	
+	
+	
+	
+	
+	
 	public void addTweet(String json)
 	{
 		MongoClient mongoClient = null;
@@ -89,8 +125,9 @@ public class DatabaseManagment {
 	}
 	
 	
-	String getIdsFromDatabase()
+	Values getItemsFromDatabase()
 	{
+		Values val = new Values();
 		MongoClient mongoClient = null;
 		
 		try {
@@ -106,21 +143,25 @@ public class DatabaseManagment {
 		{
 			cursor = coll.find();
 		}
-		DBObject obj1 = (DBObject) cursor.next().get("user");
-		//System.out.println("Hello! :" + obj1.get("id"));
+		DBObject obj1 = (DBObject) cursor.next();
+		DBObject obj2 = (DBObject) cursor.next().get("user");
 		
+		
+		System.out.println("Hello! :" + cursor.next());
+		String id = obj2.get("id").toString();
+		String text = obj1.get("text").toString();
+		
+		val.setId(id);
+		val.setText(text);
 		
 		if(!cursor.hasNext())
 		{
 			cursor.close();
-			return  "-1";
+			return  null;
 		}
 
-		return  obj1.get("id").toString();
+		return  val;
 
-		
-
-		
 	}
 	
 	

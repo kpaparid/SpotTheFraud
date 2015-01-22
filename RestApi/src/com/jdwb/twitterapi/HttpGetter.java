@@ -122,15 +122,26 @@ public class HttpGetter {
 		twitterStream.addListener(listener);
 		
 		database = new DatabaseManagment();
-		
+
 		// Reading users and dem tweetz and sorting 'em
-		HashMap<Long, Integer> freqHash = new HashMap<Long, Integer>();
+		
+		
+		
+		HashMap<Long, OurUser> freqHash = new HashMap<Long, OurUser>();
+		
+		ArrayList<String> allTrends = database.getAllTrends();
+		
+		//ksekiname auta pou elege o Billys!
 		
 		
 		int flag = 1;
 		while(flag == 1)
 		{
-		    long id =  Long.parseLong(database.getIdsFromDatabase());
+		    Values userTweet =  database.getItemsFromDatabase(); // exei ID tou xristi kai ena text, pou einai tweet tou
+		    
+		    
+		    
+		    
 		    Integer temp = freqHash.get(id);
 		    if(temp != null)
 		    {
@@ -142,6 +153,7 @@ public class HttpGetter {
 		    	freqHash.put(id, 1);
 		    }
 
+		    // otan einai null stamata
 			if(id == -1)
 			{
 				flag = 0;
@@ -215,13 +227,7 @@ public class HttpGetter {
 		ArrayList<OurUser> listOfUsers = sortByValues(nonSuspendedUsers);
 		
 		
-		
-		/* printing the sorted list
-		for(User temp: listOfUsers)
-		{
-			System.out.println(temp.getId() + " : " + temp.getNumOfTweets());
-		}
-	    */
+
 		System.out.println("Old Size: " + freqHash.size() + " New hashmap size:" + nonSuspendedUsers.size());
 		System.out.println(listOfUsers);
 		nonSuspendedUsers = null;
