@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import twitter4j.FilterQuery;
 import twitter4j.ResponseList;
 import twitter4j.StallWarning;
 import twitter4j.Status;
@@ -29,7 +30,7 @@ import twitter4j.json.DataObjectFactory;
 public class HttpGetter {
 	
 	static ArrayList<TrendStats> activeTrends;
-	private static DatabaseManagment database;
+	private static DatabaseManagment database = new DatabaseManagment();
 
 	public static void main(String[] args) throws UnknownHostException {
 
@@ -120,8 +121,61 @@ public class HttpGetter {
 		};
 
 		twitterStream.addListener(listener);
+		long startingTime = System.currentTimeMillis();
 		
-		database = new DatabaseManagment();
+ 		while (System.currentTimeMillis() <= (startingTime + 259200000)) {
+ 		try {
+ 			long currentTime = System.currentTimeMillis();
+ 
+ 			Trends trends = twitter.getPlaceTrends(1);
+ 
+ 
+ 			updateTrends(trends);
+ 
+ 			/*
+ 			 * counter++; System.out.println("Wordlwide trends");
+ 			 * System.out.println(counter); System.out.println("As of : " +
+ 			 * trends.getAsOf()); for (Trend trend : trends.getTrends()) {
+ 			 * System.out.println(trend); }
+ 			 */
+ 
+ 			
+ 			String[] keywords = new String[activeTrends.size()];
+ 			
+ 			int kounter = 0;
+ 			for (int i = 0; i < activeTrends.size(); i++) {
+ 				
+ 				String trendName = activeTrends.get(i).getTrend().getName();
+ 				long time =  activeTrends.get(i).getStartTime();
+ 				keywords[kounter++] = trendName;
+ 				
+ 				database.addTrend(trendName, time);
+ 			}
+ 			
+ 
+
+			//database.dropDB();
+			//twitterStream.cleanUp();
+			//filter.track(keywords);
+			//twitterStream.filter(filter);
+			
+			
+			
+			while (System.currentTimeMillis() <= (currentTime + 300000)) {
+
+			}
+
+		} catch (TwitterException e1) {
+			e1.printStackTrace();
+		}
+			
+		// close the Stream plz or gtfo 
+		   
+	}
+ 	
+    twitterStream.cleanUp();
+    twitterStream.shutdown();
+		
 
 		// Reading users and dem tweetz and sorting 'em
 		
@@ -131,34 +185,35 @@ public class HttpGetter {
 		
 		ArrayList<String> allTrends = database.getAllTrends();
 		
-		//ksekiname auta pou elege o Billys!
 		
 		
-		int flag = 1;
-		while(flag == 1)
+		
+		while(true)
 		{
+			
 		    Values userTweet =  database.getItemsFromDatabase(); // exei ID tou xristi kai ena text, pou einai tweet tou
-		    
-		    
-		    
-		    
-		    Integer temp = freqHash.get(id);
-		    if(temp != null)
-		    {
-		    	temp = temp + 1;
-		    	freqHash.put(id, temp);
+		    if(userTweet == null){
+		    	break;
 		    }
-		    else
-		    {
-		    	freqHash.put(id, 1);
+		    Long userID = userTweet.getId();
+		    OurUser user = freqHash.get(userID);
+		    if(user == null){
+		    	freqHash.put(userID, new OurUser(userID));
+		    	user = freqHash.get(userID);
 		    }
-
-		    // otan einai null stamata
-			if(id == -1)
-			{
-				flag = 0;
-			}
+		    for(String temp: allTrends){
+		    	if(userTweet.getText().contains(temp)){
+		    		if(!user.getList().contains(temp)){
+		    			user.getList().add(temp);
+		    			user.AddReferences();
+		    		}
+		    	}
+		    }
+		    
 		}
+		
+		
+		
 		System.out.println("Ended with the first HashMap");
 		// Looking Up for Suspended Users
 		Set<Long> keyset = freqHash.keySet();
@@ -182,7 +237,7 @@ public class HttpGetter {
 		
 		
 		
-		HashMap<Long, Integer> nonSuspendedUsers = new HashMap<Long, Integer>(); // new hash with non suspended users
+		HashMap<Long, OurUser> nonSuspendedUsers = new HashMap<Long, OurUser>(); // new hash with non suspended users
 		for(int i = 0; i < iterations; i++)
 		{
 			int jiterations = 100;
@@ -208,8 +263,8 @@ public class HttpGetter {
 				for(User t: temp)
 				{
 					long id = t.getId();
-					int freq = freqHash.get(id);
-					nonSuspendedUsers.put(id, freq);
+					OurUser  user= freqHash.get(id);
+					nonSuspendedUsers.put(id, user);
 				}
 				
 				
@@ -241,7 +296,7 @@ public class HttpGetter {
 		
 		
 		
-		ArrayList<OurUser> list = new ArrayList<OurUser>();
+		ArrayList<OurUser> MonitorList = new ArrayList<OurUser>(); // the 40 users to be monitored
 		
 		for(int j = 0; j < 4; j++) // to allaksa gt an ksekinaei apo 1, tote gia to prwto tha exeis px an to quadSize = 10 kai random = 2 tha paei
 								  // 2 + 10*1 = 12 enw eC thes to 2, enw an to ksekinas apo 0 ginetai swsta
@@ -252,96 +307,29 @@ public class HttpGetter {
 				int randNum = rndm.nextInt(quadSize) + (quadSize * j);
 
 				
-				OurUser usr = new OurUser(listOfUsers.get(randNum).getId(), listOfUsers.get(randNum).getNumOfTweets());
+				OurUser usr = new OurUser(listOfUsers.get(randNum).getId());
 			
 				userIds[(j-1)*10 + i] = listOfUsers.get(randNum).getId();
 				
-				list.add(usr);
+				MonitorList.add(usr);
 			}
 		}
 		
 		listOfUsers = null;
 		
-
-		// filter(long[] = userIds) - twitterStream filtered by Ids we have in our lovely database
+		
+		FilterQuery filterID = new FilterQuery();
+		filterID.follow(userIds);
 		
 		
+        twitterStream.filter(filterID);
 		
 		
-		
-		
-//		while (true) {
-//			try {
-//				currentTime = System.currentTimeMillis();
-//
-//				Trends trends = twitter.getPlaceTrends(1);
-//
-//
-//				updateTrends(trends);
-//
-//				/*
-//				 * counter++; System.out.println("Wordlwide trends");
-//				 * System.out.println(counter); System.out.println("As of : " +
-//				 * trends.getAsOf()); for (Trend trend : trends.getTrends()) {
-//				 * System.out.println(trend); }
-//				 */
-//
-//				String[] keywords = new String[activeTrends.size()];
-//				
-//				int kounter = 0;
-//				for (int i = 0; i < activeTrends.size(); i++) {
-//					
-//					String trendName = activeTrends.get(i).getTrend().getName();
-//					long time =  activeTrends.get(i).getStartTime();
-//					keywords[kounter++] = trendName;
-//					
-//					database.addTrend(trendName, time);
-//				}
-//				
-//
-//
-//				//database.dropDB();
-//				//twitterStream.cleanUp();
-//				//filter.track(keywords);
-//				//twitterStream.filter(filter);
-//				
-//				
-//				
-//				while (System.currentTimeMillis() <= (currentTime + 300000)) {
-//
-//				}
-//
-//			} catch (TwitterException e1) {
-//				e1.printStackTrace();
-//			}
-//				
-//			// close the Stream plz or gtfo
-//			
-//			
-//
-//			
-//			
-//			
-//			/*
-//			 * Get user id from MongoDB
-//			 * pithanes lyseis = temp pou tha periexei ola ta ids pou epistrafikan apo ti Mongo
-//			 * kai meta parse
-//			 * Þ tha tous pairnoume 1-1 apo ti mongo kai meta add sto Hash
-//			 * an yparxei tote freq += 1, an den yparxei tote add kai freq = 1
-//			 * Sort sto hash me vasi to frequency
-//			 * 4 Tetartimoria
-//			 * random epilogi xristwn ktl ktl...
-//			 */
-//			
-//			
-//			
-//			
-//		}
 
 	}
 
 	
-	private static ArrayList<OurUser> sortByValues(HashMap<Long, Integer> map) { 
+	private static ArrayList<OurUser> sortByValues(HashMap<Long, OurUser> map) { 
 		
 		
 
@@ -350,14 +338,14 @@ public class HttpGetter {
 		
 		for(Long key : keyset)
 		{
-			OurUser usr = new OurUser(key, map.get(key));
+			OurUser usr = map.get(key);
 			usersByTweets.add(usr);
 		}
 
 		    Collections.sort(usersByTweets, new Comparator<OurUser>() {
 
 		        public int compare(OurUser o1, OurUser o2) {
-		            return o1.getNumOfTweets() - o2.getNumOfTweets();
+		            return o1.getNumOfReferences() - o2.getNumOfReferences();
 		        }
 		    });
 		    

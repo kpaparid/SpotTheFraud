@@ -5,26 +5,29 @@ import java.util.ArrayList;
 public class OurUser {
 
 	private Long id;
-	private Integer numOfTrendReferences;
+	private Integer References;
 	private ArrayList<String> referencedTrends = new ArrayList<String>();	
 	
-	public OurUser (Long id, Integer num)
+	public OurUser (Long id)
 	{
 		this.id = id;
-		numOfTrendReferences = num;
 	}
 			
 	public Long getId() {
 		return id;
 	}
 	
-	public Integer getNumOfTweets() {
-		return numOfTrendReferences;
+	public Integer getNumOfReferences() {
+		return References;
 	}
 	
 	public ArrayList<String> getList()
 	{
 		return referencedTrends;
+	}
+	
+	public void AddReferences(){
+		References++;
 	}
 	
 }

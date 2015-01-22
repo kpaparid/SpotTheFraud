@@ -6,8 +6,8 @@ public class Values {
 	private String text;
 	
 	
-	public String getId() {
-		return id;
+	public Long getId() {
+		return Long.parseLong(id);
 	}
 	public void setId(String id) {
 		this.id = id;
