@@ -35,6 +35,7 @@ public class DatabaseManagment {
 		
 		db.createCollection("TrendsCollection", null);
 		db.createCollection("TweetsCollection", null);
+		db.createCollection("Monitor", null);
 		
 		System.out.println("Created Database and Collections successfully!");
 		
@@ -103,7 +104,7 @@ public class DatabaseManagment {
 	
 	
 	
-	public void addTweet(String json)
+	public void addTweet(String json, String currCol)
 	{
 		MongoClient mongoClient = null;
 		
@@ -116,7 +117,7 @@ public class DatabaseManagment {
 		
 		db = mongoClient.getDB( "twitterDB" );
 		
-		DBCollection coll = db.getCollection("TweetsCollection");
+		DBCollection coll = db.getCollection(currCol);
 		DBObject dbObject = (DBObject)JSON.parse(json);
 		 
 		coll.insert(dbObject);

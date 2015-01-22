@@ -30,6 +30,7 @@ import twitter4j.json.DataObjectFactory;
 public class HttpGetter {
 	
 	static ArrayList<TrendStats> activeTrends;
+	private static String currentCollection = "TweetsCollection";
 	private static DatabaseManagment database = new DatabaseManagment();
 
 	public static void main(String[] args) throws UnknownHostException {
@@ -73,7 +74,8 @@ public class HttpGetter {
 				
 				
 				String rawJSON = DataObjectFactory.getRawJSON(status);
-				database.addTweet(rawJSON);
+				
+				database.addTweet(rawJSON, currentCollection);
 						                      
 				/*
 				for (int i = 0; i < activeTrends.size(); i++) {
@@ -321,10 +323,14 @@ public class HttpGetter {
 		FilterQuery filterID = new FilterQuery();
 		filterID.follow(userIds);
 		
+		currentCollection = "Monitor";
 		
         twitterStream.filter(filterID);
-		
-		
+        while (System.currentTimeMillis() <= (startingTime + 259200000)) {
+        	
+        }
+        twitterStream.cleanUp();
+        twitterStream.shutdown();
 
 	}
 
