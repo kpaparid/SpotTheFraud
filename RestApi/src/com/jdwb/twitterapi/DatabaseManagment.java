@@ -3,6 +3,7 @@ package com.jdwb.twitterapi;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -119,14 +120,14 @@ public class DatabaseManagment {
 		
 		DBCollection coll = db.getCollection(currCol);
 		DBObject dbObject = (DBObject)JSON.parse(json);
-		 
+		
 		coll.insert(dbObject);
 			
 	
 	}
 	
 	
-	Values getItemsFromDatabase()
+	public Values getItemsFromDatabase()
 	{
 		Values val = new Values();
 		MongoClient mongoClient = null;
@@ -145,11 +146,9 @@ public class DatabaseManagment {
 			cursor = coll.find();
 		}
 		DBObject obj1 = (DBObject) cursor.next();
-		DBObject obj2 = (DBObject) cursor.next().get("user");
-		
-		
-		System.out.println("Hello! :" + cursor.next());
-		String id = obj2.get("id").toString();
+		DBObject usr = (DBObject) obj1.get("user");
+		//System.out.println("Hello! :" + cursor.next());
+		String id = usr.get("id").toString();
 		String text = obj1.get("text").toString();
 		
 		val.setId(id);
@@ -164,6 +163,52 @@ public class DatabaseManagment {
 		return  val;
 
 	}
+	
+	
+	
+	
+	public DBObject getTweetId()
+	{
+		
+		MongoClient mongoClient = null;
+		
+		try {
+			mongoClient = new MongoClient( "localhost" );
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		db = mongoClient.getDB( "twitterDB" );	
+		DBCollection coll = db.getCollection("TweetsCollection");
+		if(cursor == null)
+		{
+			cursor = coll.find();
+		}
+		
+		if(!cursor.hasNext())
+		{
+			cursor.close();
+			return  null; // has ended
+		}
+		DBObject obj1 = (DBObject) cursor.next();
+		
+		//DBObject usr = (DBObject) obj1.get("user");
+
+		//String id = usr.get("id").toString(); //user id
+		
+		//String is_retweeted = (String) obj1.get("retweeted");
+		
+		
+		
+
+
+		return obj1;
+	}
+	
+	
+	
+	
 	
 	
 	void addDethTime(String tName, long dTime)

@@ -6,8 +6,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+
+import org.bson.BSONObject;
+
+import com.mongodb.DBObject;
 
 import twitter4j.FilterQuery;
 import twitter4j.ResponseList;
@@ -124,7 +129,7 @@ public class HttpGetter {
 
 		twitterStream.addListener(listener);
 		long startingTime = System.currentTimeMillis();
-		
+
 		
 		System.out.println("Starting the first marathon: 3 dayz!");
  		while (System.currentTimeMillis() <= (startingTime + 86400000)) {
@@ -182,6 +187,9 @@ public class HttpGetter {
 		   
 	}
  	
+ 		
+ 		
+
  		System.out.println("Cleaning up and closing the stream...");
     twitterStream.cleanUp();
     twitterStream.shutdown();
@@ -368,36 +376,47 @@ public class HttpGetter {
 				e.printStackTrace();
 			}
         	
-        	
+        }
+
         	keys = null;
         	freqHash = null; //delete the useless hashmap
-        	
-            keys = nonSuspendedUsers.keySet();
-            ArrayList<UserDetails> level_two_list = new ArrayList<UserDetails>();
-            for(Long k1: keys)
-            {
-            	try {
-            		
-    				User usr = twitter.showUser(k1);
-    				UserDetails usrdtl = new UserDetails();
-    				
-    				usrdtl.setId(k1);
-    				usrdtl.setFollowers_num(usr.getFollowersCount());
-    				usrdtl.setFollowees_num(usr.getFriendsCount());
-    				usrdtl.calculateRatio();
-    				usrdtl.calculateAge(usr.getCreatedAt());
-    				level_two_list.add(usrdtl);
-    				
-    				
-    			} catch (TwitterException e) {
 
-    				e.printStackTrace();
-    			}
-        	
+            
+            // vazei ta ids twn 40 users sto neo hashmap gia ta stoixeia tou epipedou b
+            HashMap<Long, MonitoredUserDetails> level_two_list = new HashMap<Long, MonitoredUserDetails>();
+            keys = nonSuspendedUsers.keySet();
+            for(Long k: keys)
+            {
+            	level_two_list.put(k, new MonitoredUserDetails());
             }
+            
+
         
-        }
         
+		
+		while(true)
+		{
+			
+			DBObject obj = database.getTweetId();
+			//manageTweet(obj, user_to_manage);		
+			if(obj == null)
+			{
+				break;
+			}
+
+			//System.out.println(obj2.toString());
+		}
+		
+		
+		keys = level_two_list.keySet();
+		
+		for(Long k: keys)
+		{
+			level_two_list.get(k).calculateMeanHashtagsTweets();
+			level_two_list.get(k).calculateHashtagRatio();
+			level_two_list.get(k).calculateMeanTweetsRetweets();
+			level_two_list.get(k).calculateURLsRatio();	
+		}
                 
 
 }
@@ -405,6 +424,65 @@ public class HttpGetter {
 	
 	
 
+	public static void manageTweet(DBObject json, MonitoredUserDetails usr)
+	{
+		
+		// tweets and retweets
+		boolean is_retweeted = (boolean)json.get("retweeted");
+		if(is_retweeted)
+		{
+			usr.increaseRetweets_num();
+		}
+		else
+		{
+			usr.increaseTweets_num();
+		}
+		
+		// count replies
+		Long reply = (Long)json.get("in_reply_to_status_id");
+		
+		if(reply != null)
+		{
+			usr.increaseReplies();
+		}
+		
+		// mentions
+		Object obj2 = json.get("entities");
+		
+		Object mentions = ((BSONObject) obj2).get("user_mentions");
+		
+		Map<?, ?> temp = ((BSONObject) mentions).toMap();
+		
+		usr.increaseMentions(temp.size());
+		
+		// Hashtags
+		Object hashtags = ((BSONObject) obj2).get("hashtags");
+		
+		temp = ((BSONObject) hashtags).toMap();
+		
+		usr.increaseHashtags(temp.size());
+		
+		//URL
+		Object urls = ((BSONObject) obj2).get("urls");
+		
+		temp = ((BSONObject) urls).toMap();
+		
+		usr.increaseURLs(temp.size());
+		
+		temp = null;
+		
+		// retweets to user
+		int ret = (int) json.get("retweet_count");
+		usr.increaseRetweetsToUser(ret);
+		
+		//
+		
+	}
+	
+	
+	
+	
+	
 	
 	private static ArrayList<OurUser> sortByValues(HashMap<Long, OurUser> map) { 
 		
