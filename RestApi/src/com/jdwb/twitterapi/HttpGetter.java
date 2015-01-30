@@ -125,7 +125,10 @@ public class HttpGetter {
 		twitterStream.addListener(listener);
 		long startingTime = System.currentTimeMillis();
 		
- 		while (System.currentTimeMillis() <= (startingTime + 259200000)) {
+		
+		System.out.println("Starting the first marathon: 3 dayz!");
+ 		while (System.currentTimeMillis() <= (startingTime + 86400000)) {
+ 			
  		try {
  			long currentTime = System.currentTimeMillis();
  
@@ -145,6 +148,7 @@ public class HttpGetter {
  			String[] keywords = new String[activeTrends.size()];
  			
  			int kounter = 0;
+ 			System.out.println("Dem Trends:");
  			for (int i = 0; i < activeTrends.size(); i++) {
  				
  				String trendName = activeTrends.get(i).getTrend().getName();
@@ -152,6 +156,7 @@ public class HttpGetter {
  				keywords[kounter++] = trendName;
  				
  				database.addTrend(trendName, time);
+ 				System.out.println(i+1 + ")" + trendName);
  			}
  			
  
@@ -166,6 +171,8 @@ public class HttpGetter {
 			while (System.currentTimeMillis() <= (currentTime + 300000)) {
 
 			}
+			System.out.println("5 minutes have passed...");
+			
 
 		} catch (TwitterException e1) {
 			e1.printStackTrace();
@@ -175,6 +182,7 @@ public class HttpGetter {
 		   
 	}
  	
+ 		System.out.println("Cleaning up and closing the stream...");
     twitterStream.cleanUp();
     twitterStream.shutdown();
 		
@@ -188,11 +196,11 @@ public class HttpGetter {
 		ArrayList<String> allTrends = database.getAllTrends();
 		
 		
-		
+		System.out.println("Creating the HashMap with the frequency of dem users...");
 		
 		while(true)
 		{
-			
+			System.out.print("...");
 		    Values userTweet =  database.getItemsFromDatabase(); // exei ID tou xristi kai ena text, pou einai tweet tou
 		    if(userTweet == null){
 		    	break;
@@ -217,6 +225,7 @@ public class HttpGetter {
 		
 		
 		System.out.println("Ended with the first HashMap");
+		System.out.println("Building second HashMap with non suspended users...");
 		// Looking Up for Suspended Users
 		Set<Long> keyset = freqHash.keySet();
 		
@@ -274,7 +283,7 @@ public class HttpGetter {
 				e.printStackTrace();
 			}
 			
-			
+			System.out.println("Ended with the second HashMap");
 
 		}
 		//endof finding suspended Users
@@ -287,8 +296,8 @@ public class HttpGetter {
 
 		System.out.println("Old Size: " + freqHash.size() + " New hashmap size:" + nonSuspendedUsers.size());
 		System.out.println(listOfUsers);
-		nonSuspendedUsers = null;
-		freqHash = null;
+		//nonSuspendedUsers = null; // to idio me katw
+		//freqHash = null; //deleting the freq hash with all dem users
 		//endof reading users and sorting
 		
 		
@@ -326,13 +335,75 @@ public class HttpGetter {
 		currentCollection = "Monitor";
 		
         twitterStream.filter(filterID);
+        //wait for monitoring the users selected
         while (System.currentTimeMillis() <= (startingTime + 259200000)) {
         	
         }
         twitterStream.cleanUp();
         twitterStream.shutdown();
+        
+        
+        
+        
+        //PART 4 - BEGIN
+        Set<Long> keys = freqHash.keySet();
+        ArrayList<UserDetails> level_one_list = new ArrayList<UserDetails>();
+        for(Long k: keys)
+        {
+        	try {
+        		
+				User usr = twitter.showUser(k);
+				UserDetails usrdtl = new UserDetails();
+				
+				usrdtl.setId(k);
+				usrdtl.setFollowers_num(usr.getFollowersCount());
+				usrdtl.setFollowees_num(usr.getFriendsCount());
+				usrdtl.calculateRatio();
+				usrdtl.calculateAge(usr.getCreatedAt());
+				level_one_list.add(usrdtl);
+				
+				
+			} catch (TwitterException e) {
 
-	}
+				e.printStackTrace();
+			}
+        	
+        	
+        	keys = null;
+        	freqHash = null; //delete the useless hashmap
+        	
+            keys = nonSuspendedUsers.keySet();
+            ArrayList<UserDetails> level_two_list = new ArrayList<UserDetails>();
+            for(Long k1: keys)
+            {
+            	try {
+            		
+    				User usr = twitter.showUser(k1);
+    				UserDetails usrdtl = new UserDetails();
+    				
+    				usrdtl.setId(k1);
+    				usrdtl.setFollowers_num(usr.getFollowersCount());
+    				usrdtl.setFollowees_num(usr.getFriendsCount());
+    				usrdtl.calculateRatio();
+    				usrdtl.calculateAge(usr.getCreatedAt());
+    				level_two_list.add(usrdtl);
+    				
+    				
+    			} catch (TwitterException e) {
+
+    				e.printStackTrace();
+    			}
+        	
+            }
+        
+        }
+        
+                
+
+}
+	
+	
+	
 
 	
 	private static ArrayList<OurUser> sortByValues(HashMap<Long, OurUser> map) { 
