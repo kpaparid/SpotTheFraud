@@ -1,5 +1,9 @@
 package com.jdwb.twitterapi;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+
 public class MonitoredUserDetails {
 
 	
@@ -14,6 +18,13 @@ public class MonitoredUserDetails {
 	private double url_ratio; //vii
 	private int hashtags;
 	private int urls;
+	private ArrayList<String> tweets = new ArrayList<String>();
+	private int copies;
+	private HashMap<String, Integer> sources = new HashMap<String, Integer>();
+	private HashMap<String, Integer> expanded_urls = new HashMap<String, Integer>();
+	private double youRL; // i diairesi sto teleutaio zitoumeno
+	private HashMap<String, Integer> domains = new HashMap<String, Integer>();
+	private double domain_ratio;
 	
 	
 	
@@ -28,6 +39,9 @@ public class MonitoredUserDetails {
 		hashtag_mean = 0;
 		hashtag_ratio = 0;
 		url_ratio = 0;
+		copies = 0;
+		youRL = 0;
+		domain_ratio = 0;
 	}
 	
 	
@@ -85,6 +99,12 @@ public class MonitoredUserDetails {
 	public void setUrl_ratio(double url_ratio) {
 		this.url_ratio = url_ratio;
 	}
+	public void increaseCopies(int c){
+		copies += c;
+	}
+	
+	
+	
 	
 	
 	
@@ -126,12 +146,12 @@ public class MonitoredUserDetails {
 	
 	public void calculateMeanTweetsRetweets()
 	{
-		mean = retweets_to_user_num / tweets_num; //??????????????????
+		mean = retweets_to_user_num / (tweets_num + retweets_num); //??????????????????
 	}
 	
 	public void calculateMeanHashtagsTweets()
 	{
-		hashtag_mean = hashtags / tweets_num;
+		hashtag_mean = hashtags / (tweets_num + retweets_num);
 	}
 	
 	public void calculateHashtagRatio()
@@ -143,5 +163,120 @@ public class MonitoredUserDetails {
 	{
 		url_ratio = (urls / tweets_num) * 100;
 	}
+	
+	public void addToTweetsList(String text)
+	{
+		tweets.add(text);
+	}
+	
+	public ArrayList<String> getTweetsList()
+	{
+		return tweets;
+	}
+	
+	public HashMap<String, Integer> getSources()
+	{
+		return sources;
+	}
+
+	public void addSource(String src)
+	{
+		Integer temp = sources.get(src);
+		
+		if(temp == null)
+		{
+			sources.put(src, 1);
+		}
+		else
+		{
+			Integer i = temp + 1;
+			sources.put(src, i);
+		}
+	}
+
+	public int getNumOfSources()
+	{
+		return sources.size();
+	}
+	
+	public void printSources()
+	{
+		
+		System.out.println("New user sources.");
+		Set<String> keys;
+		keys = sources.keySet();
+		
+		for(String k: keys)
+		{
+			System.out.println("Source: " + k + "frequency: " + sources.get(k));
+			
+		}
+	}
+	
+	public void addExpandedUrl(String url)
+	{
+		Integer temp = sources.get(url);
+		
+		if(temp == null)
+		{
+			sources.put(url, 1);
+		}
+		else
+		{
+			Integer i = temp + 1;
+			sources.put(url, i);
+		}
+	}
+
+	public void computeYOURLR()
+	{
+		Integer unique = 0;
+		Integer all = 0;;
+		
+		Set<String> keys;
+		keys = expanded_urls.keySet();
+		
+		for(String k: keys)
+		{
+			all = all + expanded_urls.get(k);
+		}
+		unique = expanded_urls.size();
+		
+		youRL = unique / all;
+		
+	}
+	
+	public void addDomain(String domain)
+	{
+		Integer temp = sources.get(domain);
+		
+		if(temp == null)
+		{
+			domains.put(domain, 1);
+		}
+		else
+		{
+			Integer i = temp + 1;
+			domains.put(domain, i);
+		}
+	}
+
+	public void computeDomains()
+	{
+		Integer unique = 0;
+		Integer all = 0;;
+		
+		Set<String> keys;
+		keys = domains.keySet();
+		
+		for(String k: keys)
+		{
+			all = all + domains.get(k);
+		}
+		unique = domains.size();
+		
+		domain_ratio = unique / all;
+	}
+	
 	
 }

@@ -5,16 +5,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
 import org.bson.BSONObject;
 
 import com.mongodb.DBObject;
+import com.mongodb.util.JSON;
 
 import twitter4j.FilterQuery;
+import twitter4j.JSONException;
+import twitter4j.JSONObject;
 import twitter4j.ResponseList;
 import twitter4j.StallWarning;
 import twitter4j.Status;
@@ -40,6 +45,8 @@ public class HttpGetter {
 
 	public static void main(String[] args) throws UnknownHostException {
 
+		//database.dropDB();
+		//database = new DatabaseManagment();
 		int counter = 0;
 
 		ConfigurationBuilder cb = new ConfigurationBuilder();
@@ -70,7 +77,7 @@ public class HttpGetter {
 		TwitterStream twitterStream = new TwitterStreamFactory(cb2.build())
 				.getInstance();
 
-		//FilterQuery filter = new FilterQuery();
+		FilterQuery filter = new FilterQuery();
 		//long currentTime = 0;
 
 		StatusListener listener = new StatusListener() {
@@ -131,302 +138,309 @@ public class HttpGetter {
 		long startingTime = System.currentTimeMillis();
 
 		
-		System.out.println("Starting the first marathon: 3 dayz!");
- 		while (System.currentTimeMillis() <= (startingTime + 86400000)) {
- 			
- 		try {
- 			long currentTime = System.currentTimeMillis();
- 
- 			Trends trends = twitter.getPlaceTrends(1);
- 
- 
- 			updateTrends(trends);
- 
- 			/*
- 			 * counter++; System.out.println("Wordlwide trends");
- 			 * System.out.println(counter); System.out.println("As of : " +
- 			 * trends.getAsOf()); for (Trend trend : trends.getTrends()) {
- 			 * System.out.println(trend); }
- 			 */
- 
- 			
- 			String[] keywords = new String[activeTrends.size()];
- 			
- 			int kounter = 0;
- 			System.out.println("Dem Trends:");
- 			for (int i = 0; i < activeTrends.size(); i++) {
- 				
- 				String trendName = activeTrends.get(i).getTrend().getName();
- 				long time =  activeTrends.get(i).getStartTime();
- 				keywords[kounter++] = trendName;
- 				
- 				database.addTrend(trendName, time);
- 				System.out.println(i+1 + ")" + trendName);
- 			}
- 			
- 
 
-			//database.dropDB();
-			//twitterStream.cleanUp();
-			//filter.track(keywords);
-			//twitterStream.filter(filter);
-			
-			
-			
-			while (System.currentTimeMillis() <= (currentTime + 300000)) {
-
-			}
-			System.out.println("5 minutes have passed...");
-			
-
-		} catch (TwitterException e1) {
-			e1.printStackTrace();
-		}
-			
-		// close the Stream plz or gtfo 
-		   
-	}
- 	
- 		
- 		
-
- 		System.out.println("Cleaning up and closing the stream...");
-    twitterStream.cleanUp();
-    twitterStream.shutdown();
-		
-
-		// Reading users and dem tweetz and sorting 'em
-		
-		
-		
-		HashMap<Long, OurUser> freqHash = new HashMap<Long, OurUser>();
-		
-		ArrayList<String> allTrends = database.getAllTrends();
-		
-		
-		System.out.println("Creating the HashMap with the frequency of dem users...");
-		
-		while(true)
-		{
-			System.out.print("...");
-		    Values userTweet =  database.getItemsFromDatabase(); // exei ID tou xristi kai ena text, pou einai tweet tou
-		    if(userTweet == null){
-		    	break;
-		    }
-		    Long userID = userTweet.getId();
-		    OurUser user = freqHash.get(userID);
-		    if(user == null){
-		    	freqHash.put(userID, new OurUser(userID));
-		    	user = freqHash.get(userID);
-		    }
-		    for(String temp: allTrends){
-		    	if(userTweet.getText().contains(temp)){
-		    		if(!user.getList().contains(temp)){
-		    			user.getList().add(temp);
-		    			user.AddReferences();
-		    		}
-		    	}
-		    }
-		    
-		}
-		
-		
-		
-		System.out.println("Ended with the first HashMap");
-		System.out.println("Building second HashMap with non suspended users...");
-		// Looking Up for Suspended Users
-		Set<Long> keyset = freqHash.keySet();
-		
-		long[] lookForUsers = new long[freqHash.size()]; 
-		
-		counter = 0;
-		
-		for(Long key : keyset)
-		{
-			lookForUsers[counter] = key;
-			counter ++;
-		}
-		
-		int iterations = freqHash.size() / 100;
-		
-		if(freqHash.size() % 100 != 0)
-		{
-			iterations = iterations + 1;
-		}
-		
-		
-		
-		HashMap<Long, OurUser> nonSuspendedUsers = new HashMap<Long, OurUser>(); // new hash with non suspended users
-		for(int i = 0; i < iterations; i++)
-		{
-			int jiterations = 100;
-			if(i == iterations - 1)
-			{
-				jiterations = freqHash.size() % 100;
-			}
-			
-			long[] tempUserIds = new long[jiterations]; // temp pinakas pou kanei store 100 - 100 tous users
-			
-			for(int j = 0; j < jiterations; j++)
-			{
-				tempUserIds[j] = lookForUsers[j + (i * 100)];
-		
-			}
-			
-			
-
-			try {
-				
-				ResponseList<User> temp = twitter.lookupUsers(tempUserIds);
-				
-				for(User t: temp)
-				{
-					long id = t.getId();
-					OurUser  user= freqHash.get(id);
-					nonSuspendedUsers.put(id, user);
-				}
-				
-				
-			} catch (TwitterException e) {
-				e.printStackTrace();
-			}
-			
-			System.out.println("Ended with the second HashMap");
-
-		}
-		//endof finding suspended Users
-		System.out.println("Ended with suspended users");
-
-		
-		ArrayList<OurUser> listOfUsers = sortByValues(nonSuspendedUsers);
-		
-		
-
-		System.out.println("Old Size: " + freqHash.size() + " New hashmap size:" + nonSuspendedUsers.size());
-		System.out.println(listOfUsers);
-		//nonSuspendedUsers = null; // to idio me katw
-		//freqHash = null; //deleting the freq hash with all dem users
-		//endof reading users and sorting
-		
-		
-		// Computing quadrants
-		int quadSize = listOfUsers.size()/4;
-		long[] userIds = new long[40];
-		
-		
-		
-		ArrayList<OurUser> MonitorList = new ArrayList<OurUser>(); // the 40 users to be monitored
-		
-		for(int j = 0; j < 4; j++) // to allaksa gt an ksekinaei apo 1, tote gia to prwto tha exeis px an to quadSize = 10 kai random = 2 tha paei
-								  // 2 + 10*1 = 12 enw eC thes to 2, enw an to ksekinas apo 0 ginetai swsta
-		{
-			for (int i = 0; i < 10; i++)
-			{
-				Random rndm = new Random();
-				int randNum = rndm.nextInt(quadSize) + (quadSize * j);
-
-				
-				OurUser usr = new OurUser(listOfUsers.get(randNum).getId());
-			
-				userIds[(j-1)*10 + i] = listOfUsers.get(randNum).getId();
-				
-				MonitorList.add(usr);
-			}
-		}
-		
-		listOfUsers = null;
-		
-		
-		FilterQuery filterID = new FilterQuery();
-		filterID.follow(userIds);
-		
-		currentCollection = "Monitor";
-		
-        twitterStream.filter(filterID);
-        //wait for monitoring the users selected
-        while (System.currentTimeMillis() <= (startingTime + 259200000)) {
-        	
-        }
-        twitterStream.cleanUp();
-        twitterStream.shutdown();
+//		System.out.println("Starting the first marathon: 3 dayz!");
+// 		while (System.currentTimeMillis() <= (startingTime + 86400000)) {
+// 			
+// 		try {
+// 			long currentTime = System.currentTimeMillis();
+// 
+// 			Trends trends = twitter.getPlaceTrends(1);
+// 
+// 
+// 			updateTrends(trends);
+// 
+// 			/*
+// 			 * counter++; System.out.println("Wordlwide trends");
+// 			 * System.out.println(counter); System.out.println("As of : " +
+// 			 * trends.getAsOf()); for (Trend trend : trends.getTrends()) {
+// 			 * System.out.println(trend); }
+// 			 */
+// 
+// 			
+// 			String[] keywords = new String[activeTrends.size()];
+// 			
+// 			int kounter = 0;
+// 			System.out.println("Dem Trends:");
+// 			for (int i = 0; i < activeTrends.size(); i++) {
+// 				
+// 				String trendName = activeTrends.get(i).getTrend().getName();
+// 				long time =  activeTrends.get(i).getStartTime();
+// 				keywords[kounter++] = trendName;
+// 				
+// 				database.addTrend(trendName, time);
+// 				System.out.println(i+1 + ")" + trendName);
+// 			}
+// 			
+// 
+//
+//			//database.dropDB();
+//			//twitterStream.cleanUp();
+//			//filter.track(keywords);
+//			//twitterStream.filter(filter);
+//			
+//			
+//			
+//			while (System.currentTimeMillis() <= (currentTime + 300000)) {
+//
+//			}
+//			System.out.println("5 minutes have passed...");
+//			
+//
+//		} catch (TwitterException e1) {
+//			e1.printStackTrace();
+//		}
+//			
+//		// close the Stream plz or gtfo 
+//		   
+//	}
+// 	
+// 		
+// 		
+//
+// 		System.out.println("Cleaning up and closing the stream...");
+//    twitterStream.cleanUp();
+//    twitterStream.shutdown();
+//		
+//
+//		// Reading users and dem tweetz and sorting 'em
+//		
+//		
+//		
+//		HashMap<Long, OurUser> freqHash = new HashMap<Long, OurUser>();
+//		
+//		ArrayList<String> allTrends = database.getAllTrends();
+//		
+//		
+//		System.out.println("Creating the HashMap with the frequency of dem users...");
+//		
+//		while(true)
+//		{
+//			System.out.print("...");
+//		    Values userTweet =  database.getItemsFromDatabase(); // exei ID tou xristi kai ena text, pou einai tweet tou
+//		    if(userTweet == null){
+//		    	break;
+//		    }
+//		    Long userID = userTweet.getId();
+//		    OurUser user = freqHash.get(userID);
+//		    if(user == null){
+//		    	freqHash.put(userID, new OurUser(userID));
+//		    	user = freqHash.get(userID);
+//		    }
+//		    for(String temp: allTrends){
+//		    	if(userTweet.getText().contains(temp)){
+//		    		if(!user.getList().contains(temp)){
+//		    			user.getList().add(temp);
+//		    			user.AddReferences();
+//		    		}
+//		    	}
+//		    }
+//		    
+//		}
+//		
+//		
+//		
+//		System.out.println("Ended with the first HashMap");
+//		System.out.println("Building second HashMap with non suspended users...");
+//		// Looking Up for Suspended Users
+//		Set<Long> keyset = freqHash.keySet();
+//		
+//		long[] lookForUsers = new long[freqHash.size()]; 
+//		
+//		counter = 0;
+//		
+//		for(Long key : keyset)
+//		{
+//			lookForUsers[counter] = key;
+//			counter ++;
+//		}
+//		
+//		int iterations = freqHash.size() / 100;
+//		
+//		if(freqHash.size() % 100 != 0)
+//		{
+//			iterations = iterations + 1;
+//		}
+//		
+//		
+//		
+//		HashMap<Long, OurUser> nonSuspendedUsers = new HashMap<Long, OurUser>(); // new hash with non suspended users
+//		for(int i = 0; i < iterations; i++)
+//		{
+//			int jiterations = 100;
+//			if(i == iterations - 1)
+//			{
+//				jiterations = freqHash.size() % 100;
+//			}
+//			
+//			long[] tempUserIds = new long[jiterations]; // temp pinakas pou kanei store 100 - 100 tous users
+//			
+//			for(int j = 0; j < jiterations; j++)
+//			{
+//				tempUserIds[j] = lookForUsers[j + (i * 100)];
+//		
+//			}
+//			
+//			
+//
+//			try {
+//				
+//				ResponseList<User> temp = twitter.lookupUsers(tempUserIds);
+//				
+//				for(User t: temp)
+//				{
+//					long id = t.getId();
+//					OurUser  user= freqHash.get(id);
+//					nonSuspendedUsers.put(id, user);
+//				}
+//				
+//				
+//			} catch (TwitterException e) {
+//				e.printStackTrace();
+//			}
+//			
+//			System.out.println("Ended with the second HashMap");
+//
+//		}
+//		//endof finding suspended Users
+//		System.out.println("Ended with suspended users");
+//
+//		
+//		ArrayList<OurUser> listOfUsers = sortByValues(nonSuspendedUsers);
+//		
+//		
+//
+//		System.out.println("Old Size: " + freqHash.size() + " New hashmap size:" + nonSuspendedUsers.size());
+//		System.out.println(listOfUsers);
+//		//nonSuspendedUsers = null; // to idio me katw
+//		//freqHash = null; //deleting the freq hash with all dem users
+//		//endof reading users and sorting
+//		
+//		
+//		// Computing quadrants
+//		int quadSize = listOfUsers.size()/4;
+//		long[] userIds = new long[40];
+//		
+//		
+//		
+//		ArrayList<OurUser> MonitorList = new ArrayList<OurUser>(); // the 40 users to be monitored
+//		
+//		for(int j = 0; j < 4; j++) // to allaksa gt an ksekinaei apo 1, tote gia to prwto tha exeis px an to quadSize = 10 kai random = 2 tha paei
+//								  // 2 + 10*1 = 12 enw eC thes to 2, enw an to ksekinas apo 0 ginetai swsta
+//		{
+//			for (int i = 0; i < 10; i++)
+//			{
+//				Random rndm = new Random();
+//				int randNum = rndm.nextInt(quadSize) + (quadSize * j);
+//
+//				
+//				OurUser usr = new OurUser(listOfUsers.get(randNum).getId());
+//			
+//				userIds[(j-1)*10 + i] = listOfUsers.get(randNum).getId();
+//				
+//				MonitorList.add(usr);
+//			}
+//		}
+//		
+//		listOfUsers = null;
+//		
+//		
+//		FilterQuery filterID = new FilterQuery();
+//		filterID.follow(userIds);
+//		
+//		currentCollection = "Monitor";
+//		
+//        twitterStream.filter(filterID);
+//        //wait for monitoring the users selected
+//        while (System.currentTimeMillis() <= (startingTime + 259200000)) {
+//        	
+//        }
+//        twitterStream.cleanUp();
+//        twitterStream.shutdown();
         
         
         
         
         //PART 4 - BEGIN
-        Set<Long> keys = freqHash.keySet();
-        ArrayList<UserDetails> level_one_list = new ArrayList<UserDetails>();
-        for(Long k: keys)
-        {
-        	try {
-        		
-				User usr = twitter.showUser(k);
-				UserDetails usrdtl = new UserDetails();
-				
-				usrdtl.setId(k);
-				usrdtl.setFollowers_num(usr.getFollowersCount());
-				usrdtl.setFollowees_num(usr.getFriendsCount());
-				usrdtl.calculateRatio();
-				usrdtl.calculateAge(usr.getCreatedAt());
-				level_one_list.add(usrdtl);
-				
-				
-			} catch (TwitterException e) {
+        //Set<Long> keys = freqHash.keySet();
+        //ArrayList<UserDetails> level_one_list = new ArrayList<UserDetails>();
+//        for(int i = 0 ; i < 10 ; i++)
+//        {
+//        	try {
+//        		
+//				User usr = twitter.showUser(k);
+//				UserDetails usrdtl = new UserDetails();
+//				
+//				usrdtl.setId(k);
+//				usrdtl.setFollowers_num(usr.getFollowersCount());
+//				usrdtl.setFollowees_num(usr.getFriendsCount());
+//				usrdtl.calculateRatio();
+//				usrdtl.calculateAge(usr.getCreatedAt());
+//				level_one_list.add(usrdtl);
+//				
+//				
+//			} catch (TwitterException e) {
+//
+//				e.printStackTrace();
+//			}
+//        	
+//        }
 
-				e.printStackTrace();
-			}
-        	
-        }
-
-        	keys = null;
-        	freqHash = null; //delete the useless hashmap
+        	//keys = null;
+        	//freqHash = null; //delete the useless hashmap
 
             
             // vazei ta ids twn 40 users sto neo hashmap gia ta stoixeia tou epipedou b
-            HashMap<Long, MonitoredUserDetails> level_two_list = new HashMap<Long, MonitoredUserDetails>();
-            keys = nonSuspendedUsers.keySet();
-            for(Long k: keys)
-            {
-            	level_two_list.put(k, new MonitoredUserDetails());
-            }
-            
-
-        
-        
-		
-		while(true)
+//            HashMap<Long, MonitoredUserDetails> level_two_list = new HashMap<Long, MonitoredUserDetails>();
+//            keys = nonSuspendedUsers.keySet();
+//            for(Long k: keys)
+//            {
+//            	level_two_list.put(k, new MonitoredUserDetails());
+//            }
+//            
+//
+//
+//        
+//		
+		for(int i = 0; i < 50; i ++)
 		{
 			
 			DBObject obj = database.getTweetId();
-			//manageTweet(obj, user_to_manage);		
-			if(obj == null)
+			manageTweet(obj, new MonitoredUserDetails());	// na pairnoume to UserID apo to tweet kai na stelnoume sti manage	
+			if(obj == null)									// ton antistoixo User apo to level_two_list na to allaksoume, oxi new alla apo to hashmap
 			{
 				break;
 			}
 
-			//System.out.println(obj2.toString());
+			//System.out.println(obj.toString());
 		}
-		
-		
-		keys = level_two_list.keySet();
-		
-		for(Long k: keys)
-		{
-			level_two_list.get(k).calculateMeanHashtagsTweets();
-			level_two_list.get(k).calculateHashtagRatio();
-			level_two_list.get(k).calculateMeanTweetsRetweets();
-			level_two_list.get(k).calculateURLsRatio();	
-		}
-                
+//		
+//		
+//		keys = level_two_list.keySet();
+//		
+//		for(Long k: keys)
+//		{
+//			level_two_list.get(k).calculateMeanHashtagsTweets();
+//			level_two_list.get(k).calculateHashtagRatio();
+//			level_two_list.get(k).calculateMeanTweetsRetweets();
+//			level_two_list.get(k).calculateURLsRatio();
+//			level_two_list.get(k).computeYOURLR();
+//			level_two_list.get(k).computeDomain();
+//		}
+//		
+//		
+//		
+//		computeLevenshtein(level_two_list); // ypologizei to number of copies stin ousia
 
 }
 	
-	
-	
+
 
 	public static void manageTweet(DBObject json, MonitoredUserDetails usr)
 	{
 		
+		
+		String tweet_text = json.get("text").toString();
 		// tweets and retweets
 		boolean is_retweeted = (boolean)json.get("retweeted");
 		if(is_retweeted)
@@ -451,7 +465,20 @@ public class HttpGetter {
 		
 		Object mentions = ((BSONObject) obj2).get("user_mentions");
 		
+
 		Map<?, ?> temp = ((BSONObject) mentions).toMap();
+	
+		// remove mentions from twett
+		Iterator<?> iter = temp.entrySet().iterator();
+		while (iter.hasNext()) {
+			
+			String mention_list = iter.next().toString();	        	
+			mention_list = mention_list.replaceAll("\\d+\\=", "");
+			DBObject dbObject = (DBObject) JSON.parse(mention_list);
+		    String screen_name = dbObject.get("screen_name").toString();
+		    tweet_text = tweet_text.replace("@" + screen_name, "");
+		}
+
 		
 		usr.increaseMentions(temp.size());
 		
@@ -464,9 +491,37 @@ public class HttpGetter {
 		
 		//URL
 		Object urls = ((BSONObject) obj2).get("urls");
-		
+
 		temp = ((BSONObject) urls).toMap();
 		
+		// remove URLs from twett
+		iter = temp.entrySet().iterator();
+
+		// vganei mono ena Link, den kserw an ixyei i an einai gia ton pi*ka
+		while (iter.hasNext()) {
+			
+			String url_list = iter.next().toString();	
+			
+			url_list = url_list.replaceAll("\\d+\\=", "");
+
+			DBObject dbObject = (DBObject) JSON.parse(url_list);
+		    String url = dbObject.get("url").toString();
+
+		    tweet_text = tweet_text.replace(url, "");
+		    url = dbObject.get("expanded_url").toString();
+		    
+		    usr.addExpandedUrl(url);
+		    url = url.replace("http://", "");
+		    url = url.replaceAll("\\/.*", "");
+		    
+		    usr.addDomain(url);
+
+		    
+		}
+
+		
+		
+
 		usr.increaseURLs(temp.size());
 		
 		temp = null;
@@ -476,11 +531,60 @@ public class HttpGetter {
 		usr.increaseRetweetsToUser(ret);
 		
 		//
+		usr.addToTweetsList(tweet_text);
+		
+		// source
+		String source = json.get("source").toString();
+		source = source.replaceAll("\\<.*\\\">", "");
+		source = source.replace("</a>", "");
+		source = source.replace("Twitter for ", "");
+		usr.addSource(source);
+
+		
+		
+		
 		
 	}
 	
 	
-	
+	public static void computeLevenshtein(HashMap<Long, MonitoredUserDetails> map)
+	{
+		Set<Long> keys = map.keySet();
+		Levenshtein dist = new Levenshtein();
+		
+		for(Long k: keys) //for every User
+		{
+			MonitoredUserDetails current_user = map.get(k);
+			ArrayList<String> user_tweets = current_user.getTweetsList();
+			double distance;
+			
+			for(int i = 0; i < user_tweets.size() - 1; i++)
+			{
+				int count = 0;
+				for(int j = i + 1; j < user_tweets.size(); j++)
+				{
+					int lenght1 = user_tweets.get(i).length();
+					int lenght2 = user_tweets.get(j).length();
+					
+					distance = Levenshtein.computeLevenshteinDistance(user_tweets.get(i), user_tweets.get(j));
+					distance = distance / (lenght1 + lenght2);
+					
+					if(distance <= 0.1)
+					{
+						if(count == 0)
+						{
+							current_user.increaseCopies(2);
+							count ++;
+						}
+						else
+						{
+							current_user.increaseCopies(1);
+						}
+					}
+				}
+			}
+		}
+	}
 	
 	
 	
@@ -539,4 +643,6 @@ public class HttpGetter {
 		}
 
 	}
+	
+
 }
