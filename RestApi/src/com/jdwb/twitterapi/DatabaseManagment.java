@@ -180,7 +180,7 @@ public class DatabaseManagment {
 		}
 		
 		db = mongoClient.getDB( "twitterDB" );	
-		DBCollection coll = db.getCollection("TweetsCollection");
+		DBCollection coll = db.getCollection("Monitor");
 		if(cursor == null)
 		{
 			cursor = coll.find();
@@ -198,10 +198,6 @@ public class DatabaseManagment {
 		//String id = usr.get("id").toString(); //user id
 		
 		//String is_retweeted = (String) obj1.get("retweeted");
-		
-		
-		
-
 
 		return obj1;
 	}
